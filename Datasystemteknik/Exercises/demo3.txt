@@ -1,0 +1,91 @@
+-------------- Demosession 3.
+
+-- 5.1
+
+for (I=0; I<8; I++)
+	for (J=0; J<8000; J++)
+		A[I][J]=B[I][0]+A[J][I];
+
+1. How many 32-bit integers can be stored in a 16-byte cache block?
+
+Answer: 1 Byte = 8 bits -> 16*8/32 = 4
+In a 16-byte cache block 4 such 4-byte elements could be stored.
+
+2. References to which variables exhibit temporal locality?
+
+Answer: Temporal locality refers to the reuse of specific data and/or
+resources within a relatively small time duration.
+At each iteration I and J are needed again and again
+so those variables exhibit temporal locality.
+
+3. References to which variables exhibit spatial locality?
+
+Answer: Spatial locality (also termed data locality) refers to the use
+of data elements within relatively close storage locations.
+If we need one data items neighbouring item in the future this will
+knowned as spatial locality. So A exhibits spatial locality.
+
+4. How many 16-byte cache blocks are needed to store all 32-bit matrix
+elements being referenced?
+
+for I=1:8
+	for J=1:8000
+		A(I,J)=B(I,0)+A(J,I);
+	end
+end
+
+Answer: Word is 4 bytes or 32 bits.
+A(I,J)+B(I,0) -> 8*8000(words)+8(words)/4 (words per block) = 16002
+
+5. References to which variables exhibit temporal locality?
+
+Answer: I and J.
+
+6. References to which variables exhibit spatial locality?
+
+Answer: A.
+
+-- 5.5
+
+Streaming workload that accesses a 512 KiB working set sequentially with the following address stream:
+0, 2, 4, 6, 8, 10, 12, 14, 16, ...
+
+1. Assume a 64 KiB direct-mapped cache with a 32-byte block.
+What is the miss rate for the address stream above?
+How is this rate sensitive to the size of the cache or the working set?
+How would you categorize the misses this workload is experiencing, based in the 3C model?
+
+Answer: One block will contain 32 consecutive elements. For example, from 0-31. As the access pattern is 
+0,2,4 ...so on there will be 16 accesses to the same block where the first access is always a miss. 
+So, the miss rate would be 1/16.
+
+Miss rate is not sensitive to size of the cache or the size of working set. But it is sensitive to the 
+access pattern and block size.
+
+2. Re-compute the miss rate when the cache block size is 16, 64 and 128 bytes.
+What kind of locality is the workload exploiting?
+
+Answer: Cache Size 16 bytes -
+One block will contain 16 consecutive elements. For example, from 0-15. As the access pattern is 0,2,4,...
+so on there will be 8 accesses to the same block where the first access is always a miss. Miss rate = 1/8
+
+Cache Size 64 bytes:
+Miss rate = 1/32
+
+Cache Size 128 bytes
+Miss rate = 1/64
+
+Locality Exploited:
+Temporal Locality. We bring a cache block with neighbouring items 
+into the cache which we will need later. 
+
+Summery:
+
+Word
+
+
+
+
+
+
+

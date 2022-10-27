@@ -1,0 +1,222 @@
+-------------- 2.
+
+-- 2.1
+
+Översätt till maskinkod:
+
+sw $s1, 100($s0)
+
+Svar:
+
+I format:
+opcode(6 b) 	-> 2B(Hex) 	= 101011(Bin)
+rs(5 b) 	-> 16(Dec)($s0) = 10000(Bin)
+rt(5 b)		-> 17(Dec)($s1) = 10001(Bin)
+immidiate(16 b) -> 100(Dec)	= 0000000001100100(Bin)
+
+Maskinkod -> 1010.11 10.000 1.0001. 0000.0000.0110.0100(Bin) = AE11 0064(Hex)
+
+-- 2.2
+
+Översätt till maskininstruktion i MIPS:
+
+0000.00 10.000 0.0001. 0001.0 000.00 10.0110
+
+Svar:
+
+R format:
+000000(Bin)	= 00(Hex) -> opcode(6 b) = 0
+10000(Bin)	= 10(Hex) -> rs(5 b) = 16($s0)
+00001(Bin)	= 01(Hex) -> rt(5 b) = 1($at)
+00010(Bin)	= 02(Hex) -> rd(5 b) = 2($v0)
+00000(Bin)	= 00(Hex) -> shamt(5 b) = 0
+100110(Bin)	= 26(Hex) -> funct(6 b) = xor
+
+Maskininstruktion i MIPS -> xor $2, $16, $1
+
+-- 2.3
+
+Översätt till MIPS assemblerkod:
+
+int a[10];  
+int s;  
+s = 0;  
+for (i=1; i < 10; i++)  
+s = s - i*a[i];
+
+Svar:
+
+	la	$r1, a		# Adressen till 'a'
+	la	$r2, s		# Adressen till 's'
+	li	$r3, 0		# s = 0
+	li	$r4, 1		# i = 1
+	li	$r7, 10		# Övre gräns, 10
+
+loop:	addi	$r1, $r1, 4	# Beräkna adressen til a[i]
+	lw	$r5, 0($r1)	# Ladda a[i]
+	mul	$r6, $r4, $r5	# i*a[i]
+	sub	$r3, $r3, $r6	# s = s - i*a[i]
+	addi	$r4, $r4, $r1	# i++
+	bne	$r4, $r7, loop	# i=10?
+	sw	$r3, 0($r2)	# Lagra i adressen till s
+
+-- 2.4
+
+Hur många gånger accessas instruktionsminnet och dataminnet i koden?
+
+	lw	$v1, 0($a0)  
+	addi	$v0, $v0, 1   
+	sw	$v1, 0($a1)  
+	addi	$a0, $a0, 1 
+
+Svar:
+
+Instruktionsminnet - 4 gånger, eftersom det är 4 instruktioner
+Dataminnet - 2 gånger, en gång för lw och en gång för sw
+
+-- 2.5
+
+Översätt till MIPS assemblerkod:
+
+for (i=1; i < 100; i++)  
+    A[i] = A[i-1] + B[i];
+
+Svar:
+	li	$t0, 1		# i = 1
+	li	$t5, 100	# Övre gräns, 100
+
+loop:	lw	$t1, 0($a1)	# Ladda A[i-1]
+	lw	$t2, 4($a2)	# Ladda B[i]
+	add	$t3, $t1, $t2	# A[i-1] + B[i]
+	sw	$t3, 4($a1)	# Lagra i adressen till -> A[i]
+	addi	$a1, 4		# A[++]
+	addi	$a2, 4		# B[++]
+	addi	$t0, 1		# i++
+	bne	$t0, $t5, loop	# i=100?
+
+halt:	nop
+
+-- 2.6
+
+Skriv kortast möjliga MIPS assemblykod som adderar två tal 
+vilka endast kan ha värdena 0 eller 1.
+
+Svar:
+
+	and	$r4, $r2, $r3	# carry_out = a & b
+	sll	$r4, $r4, 1	# Skifta vänster för ev. carry_out i andra bitpositionen
+	xor	$r5, $r2, $r3	# resultat = a ^ b
+	or	$r4, $r4, $r5	# carry_out = carry_out + resultat 
+	
+-- 2.7
+
+Översätt till MIPS kod:
+
+x = x + y + z - q;
+
+Svar:
+
+	add	$t0, $s1, $s2	# t0 = x + y
+	add	$t1, $t0, $s3	# t1 = t0 + z
+	sub	$s1, $t1, $s4	# x = x - q
+
+-- 2.8
+
+Översätt till MIPS kod:
+
+int A[100], B[100], C[100]; 
+ 
+for (i = 0; i < 98; i ++) { 
+	C[i] = A[i + 1] - A[i] * B[i + 2] 
+}
+
+Svar:
+	li	$s0, 0xA000	# $s0 <- address av A
+	li	$s1, 0xB000	# $s1 <- address av B
+	li	$s2, 0xC000	# $s2 <- address av C
+	li	$t0, 0		# i = 0
+	li	$t5, 98		# Övre gräns, 98
+
+loop:	lw	$t1, 0($s0)	# $t1 <- A[i]
+	lw	$t2, 8($s1)	# $t3 <- B[i + 2]
+	mul	$t3, $t1, $t2	# A[i] * B[i + 2]
+	lw	$t1, 4($s0)	# $t1 <- A[i + 1]
+	sub	$t2, $t1, $t3	# A[i + 1] - A[i]
+	sw	$t2, 0($s2)	# A[i + 1] - A[i] * B[i] -> C[i]
+	addi	$s0, 4		# A[++]
+	addi	$s1, 4		# B[++]
+	addi	$s2, 4		# C[++]
+	addi	$t0, 1		# i++
+	bne	$t0, $t5, loop	# i=98?
+
+-- 2.9
+
+Vilken pseudoinstruktion avses?
+
+0000.00 01.0100.1001.0000.1000.0010.1010  
+0001.01 00.0010.0000.0000.0010.0000.0000
+
+Svar:
+
+• op = 000000: titta i funct-fältet. 
+• rs = 01010 = 10 = $t2 
+• rt = 01001 = 9 = $t1 
+• rd = 00001 = 1 = $at 
+• shamt = 00000 = 0 
+• funct = 101010 = 42 = slt 
+
+slt     $at, $t2, $t1  # sätt at till 1 om t2 < t1, till 0 annars.
+
+• op = 000100 = 5 = bne 
+• rs = 00001 = 1 = $at 
+• rt = 00000 = 0 = $zero 
+• imm = 0000001000000000 = 512 
+
+bne $s0,$zero, 512 # hoppa om testresultatet inte är 0.
+
+-- 2.10
+
+Skriv kortasta MIPS-instruktionssekvens för att ladda 
+heltalskonstanten 65540 i register 8.
+
+Svar:
+
+	lui	$8, 1		# Laddar de 16 högsta bitarna. St 2^16 = 65536
+	addi	$8, $8, 4	# $8(65540) = $8(65536) + 4
+
+
+
+
+Kom ihåg!
+
+
+Instruktioner:
+	li	$t0, 0		# ladda direkt
+	lw	$t0, value	# Ladda ordet (16 bit) lagrat is value
+	lw	$t1, MinnAddr.	# Laddar minnesadress
+	lw	$t1, 0($s0)	# Laddar det som finns på minnesadress[i]
+Övrigt:
+
+Hex: 0xMinnesAddress
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,24 @@
+1. Prestandaberäkningar
+
+
+A program executing in an embedded system reads each time it 
+runs 1000 measurements from a temperature sensor. Based on 
+these values a number of system parameters are calculated and stored in memory. 
+ To read a sensor value the program initiates the sensor and then 
+waits for a reply when the value is available. The system is based on 
+a MIPS-architecture that runs at 100 MHz and has the following 
+characteristics: 
+q Number of executed instructions: 2 · 109
+q CPI (excluding effect of data references): 1,3 
+q Number of data references: 20% of all instructions 
+q Hit-ratio for data references in the cache: 90% 
+q Miss penalty for data cache misses: 10 cycles 
+q Average completion time for reading one sensor value: 10 ms
+ (a) How long time does each run of the program take ? (
+
+
+
+T_tot= T_CPU + T_I/O
+T_I/O = 1000x 10ms = 10s
+T_CPU = IC * CPI * T_c
+CPI (Antal klockcykler)= 1.3 + 0.2 * 0.1 * 10 = 1.5 

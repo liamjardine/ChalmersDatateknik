@@ -1,0 +1,134 @@
+-------------- 3.
+
+-- 3.1
+
+Uttryck talet -1.75 som ett flyttal enligt IEEE754 (single precision) som hexadecimal.
+
+Svar:
+
+Bitar: Sign (31), Exp. (30-19) and Frac. (18-0).
+
+Representation: (-1) * (1 + Fraction) * 2^(Exponent-127)
+
+
+
+Sign:	(-)		->	1
+Exp:	0 + Bias : 0 + 127 = 127 = 01111111
+Frac:	1 + 3/4 = 7/4 = 111(Dec) * 2^-2 -> 1.11(Dec) * 2^0 -> 1100 0000
+
+1_01111111_11000000000000000000000 (Bin) = BFE00000 (Hex)
+
+-> 20180000
+
+-- 3.2
+
+Antag följande bitmönster (MSB först) och ange värdet enligt
+EEE754 (Single precision):      
+ 
+00000010000000010001000000100110
+
+Svar:
+
+Använd -> (−1)^s*(1+Frac.)*2^(Exp.-127)
+
+0_00000100_00000010001000000100110
+    7-0 <- -> 1-23
+
+Sign:	(+)		->	0
+Exp:	2^2 = 4 -> (4-127) = -123
+Frac:	00000010001000000100110 -> 2^-7 + 2^-11 + 2^-18 + 2^-21 + 2^-22 =
+1/128 + 1/2048 + 1/262144 + 1/2097152 + 1/4194304 = .0083053112
+
+(−1)^0*(1+.0083053112)*2^(-123)
+
+-> 9.48205757779e-38
+
+-- 3.3
+
+a. Man avser att vidareutveckla IP. Efter hur många månader kan man räkna 
+med att IP kan exekvera P lika snabbt som nuvarande version av FP om man 
+antar att klockfrekvensen för IP fördubblas var artonde månad?
+
+Svar:
+
+Tid: T = I * CPI * T_c
+Klockfrekvens: IP = 1 GHz, FP = 0.5 GHz
+
+IP:
+flyttalsmultiplikationer	30 instruktioner 
+flyttalsadditioner   		20 instruktioner 
+flyttalsdivisioner   		50 instruktioner 
+
+FP: (CPI = 1)
+flyttalsmultiplikationer  	5 klockcykler = instruktioner
+flyttalsadditioner   		4 klockcykler = instruktioner
+flyttalsdivisioner              16 klockcykler = instruktioner
+övriga operationer   		2 klockcykler = instruktioner
+
+
+P: 
+flyttalsmultiplikationer 	20% 
+flyttalsadditioner		10% 
+flyttalsdivisioner		5% 
+övriga operationer   		65% 
+
+Tid:
+-> IP = (30*0.2 + 20*0.1 + 50*0.05 + 1*0.65) / 1000 = 11.15 * 10^-9 sec
+-> FP = (5*0.2 + 4*0.1 + 16*0.05 + 2*0.65) / 500 = 7 * 10^-9 sec
+
+11.15/7 = 1.59285714286
+
+log_2(1.59285714286)*18 = 12.0891038936
+
+b. Ett sätt att minska exekveringstiden är att förbättra kompilatorn så att den 
+genererar effektivare kod. Vilken av processorerna drar mest nytta av den nya 
+kompilatorn och hur mycket snabbare går det att exekvera P med den nya 
+kompilatorn?
+
+Svar:
+
+P:
+flyttalsmultiplikationer  	10% 
+flyttalsadditioner      	6% 
+flyttalsdivisioner     		2% 
+övriga operationer   		82% 
+
+CPI:
+-> IP = (30*0.1 + 20*0.06 + 50*0.02 + 1*0.82) = 6.02
+-> FP = (5*0.1 + 4*0.06 + 16*0.02 + 2*0.82)  = 2.7
+
+Exekveringstids skillnad:
+-> IP = 6.02 * 1.3 / (30*0.2 + 20*0.1 + 50*0.05 + 1*0.65) = 70 %
+-> FP = 2.7 * 1.3 / (5*0.2 + 4*0.1 + 16*0.05 + 2*0.65) = 100 %
+
+
+
+
+Kom ihåg!
+
+IEEE (Single precision) -> (−1)^s*(1+Frac.)*2^(Exp.-127)
+
+Sign. 	Exp.		Frac.
+0_	00000000_	00000000000000000000000
+    	7-0 <-		-> 1-23
+	
+Exekveringstid: Instruktion * Klockcykler per Instruktion * Intruktionstid
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

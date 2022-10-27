@@ -1,0 +1,60 @@
+1.
+(a) Kommentera följande program rad för rad och beskriv sedan kort vad hela programmet gör.
+
+	addi $t0, $zero, 0	# i = 0
+	addi $t1, $zero, 0	# tmp = 0
+L1: 	sll $t2, $t0, 2		# $t2 = i * 4
+	add $t3, $a0, $t2	# $t3 = A + i * 4 -> A[i]
+	lw $t4, 0($t3)		# $t4 <- A[i]
+	add $t1, $t1, $t4	# tmp += A[i]
+	addi $t0, $t0,1		# i++
+	slt $t5, $t0, $a1	# $t5 = (i < j) 0:1?
+	bne $t5, $zero, L1	# $t5 /= 0 -> L1
+	add $v0, $zero, $t1	# $v0 = tmp
+
+Svar: Kom ihåg att $t0 = i, $a0 = A, 0($a0) = A[i], 4($a0) = A[i+1], $a1 = j.  
+Beräknar summan A[i], där i = 0:j.
+
+(b) Polling vs. avbrott.
+En processor med klockfrekvensen 1 GHz behöver läsa datapaket från en viss I/O enhet. 
+Enheten genererar 1 byte var tjugonde mikrosekund; att ta vara på denna byte tar 1000 
+cykler. Vi kan välja mellan att hantera dessa data genom pollning eller genom 
+avbrottsstyrning.
+
+i. Ett avbrott tar 200 cykler att hantera. Hur stor del av processorkapaciteten
+åtgår för att hantera denna I/O-enhet om avbrottsstyrning används?
+
+Svar: Klockfrekvensen 1 GHz betyder att vi har en cykel varje 10^-9 sekund.
+En sekund ger 10^9 klockcykler. En Byte anländer var 20 microsekund, eller
+en Byte per 20000 cykler (10^9 * 20*10^-6, Cykel per sekund / Byte per sekund)
+
+Det tar 1000+200 cykler att hantera avbrottet och ta in datan.
+Del av processorkapaciteten blir (1200/20000) = 6%
+
+ii. Antag nu istället att pollning används. 75 cykler åtgår för varje pollningsoperation. Hur 
+stor del av processorkapaciteten krävs i detta fall, givet att svarstiden skall vara 
+densamma som i avbrottsfallet?
+
+Svar: i. Samma svarstid som i avbrottsfallet garanteras om vi i varje 200-cykel-period spenderar 75 cykler på en 
+pollningsoperation. När pollningsoperationen hittar data (var tjugonde mikrosekund) kommer dessutom 
+1000 cykler att spenderas på att ta hand om datat. Då åtgår 1000+(75/200)·(20000−1000) = 8125 cykler, 
+eller 8125/20000 = 40.6% av den totala kapaciteten, för att hantera denna I/O.
+
+2. Ett visst program exekveras i en processorsimulator liknande den ni sett i laborationer
+och inlämningsuppgift. Processorn har ett icke-associativt cache med totala storleken
+1 KB. Det visar sig att andelen missar är 38% om blockstorleken sätts till 4B; 22% vid
+blockstorleken 16B; 19% för blockstorleken 64B; och 27% vid blockstorleken 256B.
+Miss penalty är 4+b/4 cykler, där b är blockstorleken, och det görs 1,2 minnesreferenser
+per instruktion. CPI utan cachemissar är 2. Klockfrekvensen antas vara oberoende av
+blockstorleken.
+
+(a) Varför minskar andelen missar när blockstorleken ökar från 4B till 16B och från 16B 
+till 64B?
+
+Svar: 
+
+
+
+
+
+

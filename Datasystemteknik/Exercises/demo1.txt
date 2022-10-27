@@ -1,0 +1,130 @@
+-------------- Demosession 1.
+
+-- 1.5
+
+Given three processors P1, P2 and P3 executing the same instructions set.
+P1 has a 3.0 GHz clock rate and CPI of 1.5.
+P2 has a 2.5 GHz clock rate and CPI of 1.0.
+P3 has a 4.0 GHz clock rate and CPI of 2.2.
+
+- a. Which processor has the the highest performance expressed in instructions per second?
+
+-- CPI = clock cycles/instruction. Frequency(clock rate)= clock cycles/seconds
+
+Performance = instructions/second = 1/CPI * Frequency = instruction/clock cycles * clock cycles/seconds
+
+	Performance
+P1:	2.0 inst./ns
+P2:	2.5 inst./ns
+P3:	1.8 inst./ns
+
+
+- b. If the processors each execute a program in 10 seconds, find the number of cycles and
+the number of instructions.
+
+-- Clock cycles = Frequency * Execution Time. Instructions = Clock cycles/CPI
+
+	Clock cycles	Instructions
+P1:	30*10^9 s	20*10^9
+P2:	25*10^9 s	25*10^9
+P3:	40*10^9 s	18*10^9
+
+
+
+- c. We are trying to reduce the execution time by 30% but this leads to an increase of 20% in the CPI.
+What clock rate should we have to get this time reduction?
+
+-- Clock cycles = CPI*Instructions, Frequency = clock cycles/execution time
+
+Before:
+f1
+#instr.1
+cpi1
+time1
+
+After:
+f2 = cpi2*#instr.2/time2 = 1.2*cpi1*#instr.1/0.7*time1 = 1.71*cpi1*#instr.1/time1 = 1.71*f1
+#instr.2 = #instr.1
+cpi2 = 1.2*cpi1
+time2 = 0.7*time1
+
+	Frequency	
+P1:	5.13 GHz
+P2:	4.275 GHz
+P3:	6.84 GHz
+
+
+
+-- 1.7
+
+Compilers can have a profound impact on the performance of an application.
+Assume that for a program, compiler A results in a dynamic instruction count of
+1.0E9 and has an execution time of 1.1s, while compiler B results in a dynamic instruction
+sount of 1.2E9 and an execution time 1.5s.
+
+- a. Fins the average CPI for each program given that the processor has a clock cyckle of 1 ns.
+
+-- CPI = Execution time*Frequency/Number of instruction, Frequency = 1/clock cycles
+
+	Average CPI	
+A:	1.1	
+B:	1.25
+
+- b. Assume the compiled programs run in two different processors. If the execuiton
+times on the two processors are the same, how much faster is the clock of the
+processor running compiler A's code versus B?
+
+-- Speedup = Frequency_A/Frequency_B
+
+Clock of A's code is 1.36 times faster than B's.
+
+- c. A new compiler uses only 6.0E8 instructions and has an average CPI of 1.1.
+What is the speedup of using this new compiler 
+versus using compiler A or B on the original processor?
+
+-- Speedup_newOverOld = Execution time_old/Execution time_new =
+
+dynamic instruction count_A * execution time_A /
+dynamic instruction count_B * execution time_B
+
+Speedup A -> 1.67
+Speedup B -> 2.73
+
+-- 2.3
+
+Translate to MIPS:
+
+B[8] = A[i-j];
+
+f,g,h,i,j are assigned to $s0-$s6.
+Base A, and Base B are assigned to $s7-$s8. 
+
+--
+
+Step 1. Compute i-j
+
+	sub $t0, $s3,$s4	#$t0 = $s3-$s4.
+
+Step 2. Compute offset for accessing A[i-j] 
+
+	sll $t0, $t0,2		#$t0 = $t0*4 = $t0 << 2
+
+Step 3. Add offset to the base adress of A[i-j]
+
+	add $t0, $t0,$s6	#$t0 = $t0 + $s6
+
+Step 4. Load A[i-j] into the CPU register
+
+	lw $t1, 0($t0)		#$t1 = Memory[$t0+0]
+
+Step 5. Store A[i-j] into B[8] in the memory
+
+	sw $t1, 32($s7)		#Memory[$s7+32] = $t1
+
+
+
+
+
+
+
+

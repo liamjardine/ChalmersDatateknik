@@ -1,0 +1,322 @@
+-------------- 4.
+
+-- 4.1
+
+	lui  	$s0, 1 
+	ori  	$s0, $s0, 5 
+	addi  	$t0, $zero, 7 
+L1:  	addi  	$s0, $s0, -2   
+	addi  	$t0, $t0, -1 
+	bne  	$t0, $zero, L1 
+	srl  	$s1, $s0, 2
+
+a. Vad innehåller $s1 i slutet?
+
+Svar:
+
+	lui  	$s0, 1 		$s0 = 65536
+	ori  	$s0, $s0, 5	$s0 = 65541
+	addi  	$t0, $zero, 7	$t0 = 7
+L1:  	addi  	$s0, $s0, -2	$s0 - 2 * 7 -> $s0 = 65527
+	addi  	$t0, $t0, -1	$s0 - 1 * 7
+	bne  	$t0, $zero, L1 
+	srl  	$s1, $s0, 2	$s1 = 16381 (Heltalsdivision med 4)
+
+b. Hur många cykler kommer en exekvering att ta på en processor med fem 
+pipelinesteg och där forwarding används i möjligaste mån?
+
+Svar:
+
+4 Instruktioner i slingan. Vi måste lägga till
+en stallcykel mellan addi och bne för att undvika
+en RAW-hazard.
+
+	...	...
+	addi  	$t0, $t0, -1	$s0 - 1 * 7
+	nop	
+	bne  	$t0, $zero, L1 
+	...	...
+
+Alltså blir antalet cycklar i slingan 5. Plus de
+3 intruktioner innan slingan. Dock krävs en extra cykel
+för att tömma pipen, om man kör 5 steg.
+
+4 + 5*7 = 39
+
+-- 4.2
+
+a. Kommentera följande program rad för rad och beskriv sedan kort vad hela 
+programmet gör.
+
+b. Markera och ange typ för de hazarder som kan finnas i koden ovan om den 
+exekveras på en 5-stegs MIPS pipeline.
+
+Svar:
+
+$t0 : i
+$t1 : tmp
+$a0 : u
+$a1 : j
+
+	addi  	$t0, $zero, 0	i = 0			
+	addi  	$t1, $zero, 0 	tmp = 0
+L1: 	sll  	$t2, $t0, 2 	$t2 = i * 4		RAW (1-3) för $t0
+							RAW (3-4) för $t2
+	add  	$t3, $a0, $t2	$t3 = u + i * 4
+							RAW (4-5) för $t3
+	lw  	$t4, 0($t3)	$t4 = u[i * 4]
+							RAW (5-6) för $t4
+	add 	$t1, $t1, $t4	tmp += u[i]
+	addi 	$t0, $t0,1 	i++
+							RAW (7-8) för $t0
+	slt  	$t5, $t0, $a1	$t5 = (i < j)?
+							RAW (8-9) för $t5
+	bne  	$t5, $zero, L1 	$t5 /= 0?		Styr hazard.
+	add  	$v0, $zero, $t1	$v0 = $t1
+
+Koden beräknar summan mellan u[i] + ... + u[j-j].
+
+c. Om pipen för lösning av hazarder använder sig av fördröjda hopp (med ett 
+delay slot), forwarding i full utsträckning, och stall av pipen i övrigt, hur många 
+klockcykler tar då koden ovan om a0=0, a1 = 999 före exekvering?
+
+Svar:
+
+$t0 : i
+$t1 : tmp
+$a0 : u
+$a1 : j = 999
+
+	addi  	$t0, $zero, 0	i = 0			
+	addi  	$t1, $zero, 0 	tmp = 0
+L1: 	sll  	$t2, $t0, 2 	$t2 = i * 4
+	add  	$t3, $a0, $t2	$t3 = u + i * 4 -> u[i] eftersom först u[0], sedan u[1 = (4)] osv.
+	lw  	$t4, 0($t3)	$t4 = u[i * 4]
+	add 	$t1, $t1, $t4	tmp += u[i]
+	addi 	$t0, $t0,1 	i++
+	slt  	$t5, $t0, $a1	$t5 = (i < j)?
+	bne  	$t5, $zero, L1 	$t5 /= 0?
+	add  	$v0, $zero, $t1	$v0 = $t1
+	stall
+
+(8 inst + 1 stall) * 999 + 2 + 4 (avsluta pipelinen) = 8997
+
+-- 4.3
+
+Beräkna hur många cykler följande MIPS-program tar att exekvera för var och en 
+av hoppgissningsstrategierna ”always stall”, ”assume not taken” och ”assume 
+taken”. 
+ 
+	addi  $5, $0, 2 
+L1:  	lw  $4, 100($5) 
+ 	addi  $5, $5, -1 
+ 	add  $3, $3, $4 
+ 	bne  $5, $0, L1 
+ 	sw  $3, 100($0)
+
+Svar:
+
+Programmet kör 1+(4*2)+1=10 instruktioner. För att avsluta pipelinen blir
+detta 10+4=14 cykler.
+
+Det finns structurella-, data- och styrkonflikter.
+Vi förutsätter inga struturella konflikter.
+Inga databeroenden finns som inte kan lösas med forwarding.
+Metoder för att hantera styrkonflikter, "control hazards".
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+Nothing:			1	2	3	4	5	6	7	8	9	10	11	12	13	14
+	addi  $5, $0, 2		IF	ID	EX	MEM	WB
+L1: (1) lw  $4, 100($5) 		IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 			IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 				IF	ID	EX	MEM
+ 	bne  $5, $0, L1 					IF	ID	EX	MEM	WB
+L1: (2)	lw  $4, 100($5) 						IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 							IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 								IF	ID	EX	MEM	WB
+ 	bne  $5, $0, L1 									IF	ID	EX	MEM	WB
+ 	sw  $3, 100($0)											IF	ID	EX	MEM	WB
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+always stall:			1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16
+	addi  $5, $0, 2		IF	ID	EX	MEM	WB
+L1: (1) lw  $4, 100($5) 		IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 			IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 				IF	ID	EX	MEM
+ 	bne  $5, $0, L1 					IF	ID	EX	MEM	WB
+L1: (2)	lw  $4, 100($5) 						stall	IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 								IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 									IF	ID	EX	MEM	WB
+ 	bne  $5, $0, L1 										IF	ID	EX	MEM	WB
+ 	sw  $3, 100($0)												stall	IF	ID	EX	MEM	WB
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+assume not taken:		1	2	3	4	5	6	7	8	9	10	11	12	13	14	15
+	addi  $5, $0, 2		IF	ID	EX	MEM	WB
+L1: (1) lw  $4, 100($5) 		IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 			IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 				IF	ID	EX	MEM
+ 	bne  $5, $0, L1 					IF	ID	EX	MEM	WB
+ 	sw  $3, 100($0)							IF	ID	EX	MEM	WB 
+L1: (2)	lw  $4, 100($5) 							IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 								IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 									IF	ID	EX	MEM	WB
+ 	bne  $5, $0, L1 										IF	ID	EX	MEM	WB
+ 	sw  $3, 100($0)												IF	ID	EX	MEM	WB 
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+assume taken: 			1	2	3	4	5	6	7	8	9	10	11	12	13	14	15
+	addi  $5, $0, 2		IF	ID	EX	MEM	WB
+L1: (1) lw  $4, 100($5) 		IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 			IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 				IF	ID	EX	MEM
+ 	bne  $5, $0, L1 					IF	ID	EX	MEM	WB
+L1: (2)	lw  $4, 100($5) 						IF	ID	EX	MEM	WB
+ 	addi  $5, $5, -1 							IF	ID	EX	MEM	WB
+ 	add  $3, $3, $4 								IF	ID	EX	MEM	WB
+ 	bne  $5, $0, L1 									IF	ID	EX	MEM	WB
+L1: (3)	lw  $4, 100($5) 										IF	ID	EX	MEM	WB
+ 	sw  $3, 100($0)												IF	ID	EX	MEM	WB 
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Hoppet i bne-instruktionen tas en av två gånger. Tydligen kommer ”assume 
+taken” och ”assume not taken” att ge samma resultat (eftersom båda gissar rätt 
+en gång och gissar  fel en gång), medan ”always stall” kommer att bli sämre 
+(eftersom den ”gissar fel” båda  gångerna).  
+ 
+Nu hänger svaret på hur många stall-cykler som uppkommer vid varje 
+felgissning. Beroende på i vilket pipelinesteg*se not hoppvillkoret beräknas kan 
+svaren bli olika. En eller tre cykler kan godtas med en bra motivering. 
+Svar:  
+Vid ”assume taken” och ”assume not taken” (en felgissning):  
+Klockcykel = 15 (om hoppvillkoret beräknas i pipesteg 2), eller klockcykel = 17 
+(hoppvillkoret beräknas i pipesteg 3 och tillgängligt efter pipesteg EX/MEM).  
+ 
+Vid ”always stall” (två felgissningar):   
+Klockcykel = 16 (hoppvillkoret beräknas i pipesteg 2), eller klockcykel = 20 
+(hoppvillkoret beräknas i pipesteg 3 och tillgängligt efter pipesteg EX/MEM).  
+
+-- 4.4
+
+a. Komplettera tabellen nedan och visa hur koden flyter genom pipen.
+Multiplikationer (4 klockcykler), FP load/stores (1 klockcykel), FP additioner (2 klockcykler).
+Alla heltalsinstruktioner tar 1 klockcykel. 
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+				1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
+addu	$2, $2, $3		F  D  E  M  W                     
+l.d	$f0, 0($2)                 F  .  .  D  E  M  W 								<-- Addition (2 kc.)
+mul.d	$f2, $f2, $f0                       F  .  .  D  E  .  .  M  W						<-- Addition (2 kc.)
+l.d	$f8, 1000($2)                                F  .  .  .  .  D  E  .  .  .  M  W 
+mul.d	$f4, $f4, $f8                                         F  .  D  E  M  W      
+add.d	$f6, $f2, $f4			                            F  .  .  .  .  .  D  E  .  M  W 
+s.d	$f6, 0($4)                                                                             F  D  E  M  W
+subui 	$4, $4, 4          		 	                                         F  .  D  E  M  W
+beq 	$2, $4, L46				            	                               F  .  .  D  E  M  W
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- 4.5
+
+Denna övning belyser hur bypassing (forwarding) påverkar 
+exekveringsprestanda. Antag den klassiska 5-stegs MIPS pipen (se figur i 
+kursboken eller nedan). Exempelkod: 
+ 
+1  add  $t2, $s1, $sp 
+2  lw  $t1, 0($t1) 
+3  addi  $t2, $t1, 7 
+4  add  $t1, $s2, $sp 
+5  lw  $t1, 0($t1) 
+6  addi  $t1, $t1, 9 
+7  sub  $t1, $t1, $t2 
+
+a. Hur stor är ”load-use latency” för 5-stegs pipen? 
+
+Svar: “Load use latency” for den klassiska (standard) MIPS 5-stegs pipe är 1 cykel. 
+
+b. Ange i tabellen nedan om värdet för ALU-operanderna tas från registerfilen 
+(skriv ”Register fil” i tab.), eller från bypassvägen (skriv ”Bypass” i tab.).
+
+Inst.	Src Operand 1	Src Operand 2
+1	Register fil	Register fil			
+2	Register fil	N/A
+3	Bypass		N/A
+4	Register fil	Register fil
+5	Bypass		N/A
+6	Bypass		N/A
+7	Bypass		Register fil
+
+c. Hur många klockcykler tar programmet att exekvera på 5-stegs pipen?
+
+11 = 7 instruktioner + 4 pipelines + 2 stalls
+
+d. Antag att man har skapat en modifierad pipeline där bypassbussen från 
+minnessteget tillbaka till exekveringssteget har tagits bort. Vad blir då “load-use 
+latency” för denna modifierade pipeline?
+
+Svar: 2 Klockcyckler
+
+e. Ange i tabellen nedan om värdet för ALU-operanderna tas från registerfilen 
+(skriv ”REG” i tab.), eller från bypassvägen (skriv ”BYPASS” i tab.) i den 
+modifierade pipelinen.
+
+Inst.	Src Operand 1	Src Operand 2
+1	Register fil	Register fil			
+2	Register fil	N/A
+3	Bypass		N/A
+4	Bypass		Register fil
+5	Bypass		N/A
+6	Bypass		N/A
+7	Bypass		Bypass
+
+5
+
+Kom ihåg!
+
+I en slinga kommer srl vara i delayslotten efter branch
+och blir således inkluderad i slingan:
+
+	...	...
+	bne  	$t0, $zero, L1 
+	srl  	$s1, $s0, 2
+	stall
+	...	...
+
+a register -> inparametrar
+t register -> oftast index eller tmp
+v register -> slutvärde
+
+u[0] -> 0(u)
+u[1] -> 4(u) alt. 0(u + 4)
+u[2] -> 8(u) alt. 0(u + 8)
+
+För att avsluta pipeline:
+
+Säg 5 stegspipeline -
+
+	1.	2.	3.	4.	5.	6.<	7.<	8.<	9.<
+1.	o	o	o	o	o	
+2.		o	o	o	o	o
+3.			o	o	o	o	o
+4.				o	o	o	o	o
+5.					o	o	o	o	o
+
+4 cyckler för att avsluta 5 steg pipeline.
+
+När vi vill något med registret så hämtar något i första halv (load register) av cykeln och lämnar något i andra halvan (store register).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,3 @@
+dokument/
+intro/
+kod/
